@@ -1,6 +1,9 @@
 import json
 import pathlib
 
+# TODO: this import is a placeholder
+import tinker_engine
+
 
 def default_config():
     config = {
@@ -17,7 +20,7 @@ def default_config():
 
 
 class ONDProtocol():
-    def __init__(self, config):
+    def __init__(self, config, interface):
         """
         Args:
             config (dict|str): Dict representing pre-populated config or a
@@ -48,14 +51,47 @@ class ONDProtocol():
 
         # TODO: import/load the algorithm class via tinker/smqtk?
         # TODO: rename "detector_config" to "algorithm_config"?
-        NoveltyAlgorithm = foo.get_algorithm(novelty_algorithm_name)
+        NoveltyAlgorithm = tinker_engine.get_algorithm(novelty_algorithm_name)
         self.algorithm = NoveltyAlgorithm(self.config["detector_config"])
 
-    def run_protocol(self):
-        pass
+        # TODO: get/instantiate interface from config? Or pass instance to
+        # constructor?
+        self.interface = interface
 
-    def run_test(self, test_params):
-        """
-        TODO: call this from run_protocol?
-        """
-        pass
+    def run_protocol(self):
+        # TODO: should test IDs be in the config or passed in a different way?
+        # TODO: interface calls should match ParInterface/LocalInterface usage.
+        sess_id = self.interface.session_request(self.config["test_ids"])
+
+        for test_id in self.config["test_ids"]:
+            # NOTE: Use test_params on a per-test basis instead of toolset?
+            test_params = self.interface.get_test_metadata(sess_id, test_id)
+
+            # TODO: better way to handle save_attributes.
+            if self.config["save_attributes"]:
+                test_params["attributes"] = {}
+
+            # TODO: Have a boolean "red_light" field?
+            if "red_light" in test_params["metadata"]:
+                pass
+            else:
+                pass
+
+            # TODO: how to handle image classification feedback? Existing
+            # sail_on_client uses an ImageClassificationFeedback class that
+            # uses the interface to obtain image feedback.
+            if (
+                "feedback_params" in self.config["detector_config"]
+                and self.config["domain"] == "image_classification"
+            ):
+                # TODO: refactor all of this?
+                feedback_params = self.config["detector_config"]["feedback_params"]
+                
+                first_budget = feedback_params["first_budget"]
+                income_per_batch = feedback_params["income_per_batch"]
+                max_budget = feedback_params["max_budget"]
+
+                # TODO
+                test_params["image_classification_feedback"] = None
+
+            # TODO: remainder of test functionality.
