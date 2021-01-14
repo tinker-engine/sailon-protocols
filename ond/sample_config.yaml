@@ -1,0 +1,3 @@
+domain: image_classification
+test_ids: [OND.sample.1]
+novelty_detector_class: OND_5_14_A1
