@@ -1,3 +1,6 @@
+import csv
+import datetime
+import io
 from typing import List, Dict, IO
 import uuid
 
@@ -80,36 +83,41 @@ class DummyInterface():
             "max_novel_classes": "413",
             "protocol": "OND",
             #"red_light": "test/test_images/images_205000_to_210000/205023.jpeg",
-            "round_size": 128
+            #"round_size": 128
+            "round_size": 2,
         }
         return metadata
 
-    def dataset_request(session_id: str, test_id: str, round_id: int) -> IO:
+    def dataset_request(
+        self, session_id: str, test_id: str, round_id: int
+    ) -> IO:
         """
         This method mocks reading the csv file of image filenames (based on
         the session id and test id).
         """
         metadata = self.get_test_metadata(session_id, test_id, api_call=False)
+        test_id_fpath = "sample_test.csv"
 
-        # Ignore `round_id` for now and simply return a file handle for the
-        # whole file instead of a chunk of the csv file.
+        with open(test_id_fpath, "r") as f:
+            csv_reader = csv.reader(f, delimiter=",")
+            lines = [
+                line[0] for line in csv_reader
+                if (line and line[0].strip("\n\t\"',."))
+            ]
+
+        file_list = None
+
+        start_idx = 0
+        end_idx = len(lines)
         if round_id is not None:
-            # Create a temporary file handle pointing to a temp file that
-            # contains only the portion of the test id csv file containing
-            # the chunk of filenames for the current round.
-            #round_pos = int(round_id) * int(metadata["round_size"])
-            pass
+            # TODO: error handling if round size undefined or invalid round id.
+            round_id = int(round_id)
+            round_size = int(metadata["round_size"])
+            start_idx = round_id * round_size
+            end_idx = start_idx + round_size
 
-        fpath = "sample_test.csv"
-        file_ = open(fpath, "rb")
-
-        log_session(
-            self.results_folder,
-            session_id,
-            test_id=test_id,
-            round_id=round_id,
-            activity="data_request"
-        )
+        if start_idx < len(lines):
+            file_list = lines[start_idx:end_idx]
 
         # Refactor and update this functionality to match log_session for
         # data_request, test, and round activities from sail-on-api.
@@ -121,7 +129,7 @@ class DummyInterface():
             },
         }
 
-        return file_
+        return file_list
 
     def post_results(
         self,
