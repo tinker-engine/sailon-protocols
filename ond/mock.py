@@ -1,6 +1,6 @@
 """Mocks mainly used for testing protocols (from legacy sail-on-client)."""
 
-from typing import Dict, Any, Tuple, Callable
+from typing import Any, Callable, Dict, List, Tuple
 
 import logging
 import torch
@@ -9,12 +9,12 @@ import torch
 class MockDetector():
     """Mock Detector for testing image classification protocols."""
 
-    def __init__(self, toolset: Dict) -> None:
+    def __init__(self):
         """
         Detector constructor.
 
         Args:
-            toolset (dict): Dictionary containing parameters for the constructor
+            config (dict): Algorithm configuration parameters.
         """
         self.step_dict: Dict[str, Callable] = {
             "Initialize": self._initialize,
@@ -25,55 +25,43 @@ class MockDetector():
             "NoveltyCharacterization": self._novelty_characterization,
         }
 
-    def execute(self, toolset: Dict, step_descriptor: str) -> Any:
+    def execute(self, step_descriptor: str, *args, **kwargs):
         """
-        Execute method used by the protocol to run different steps associated with the algorithm.
+        Execute method used by the protocol to run different steps associated
+        with the algorithm.
 
         Args:
-            toolset (dict): Dictionary containing parameters for different steps
-            step_descriptor (str): Name of the step
+            step_descriptor (str): Name of the step.
         """
         logging.info(f"Executing {step_descriptor}")
-        return self.step_dict[step_descriptor](toolset)
+        return self.step_dict[step_descriptor](*args, **kwargs)
 
-    def _initialize(self, toolset: Dict) -> None:
-        """
-        Algorithm Initialization.
+    def _initialize(self, config: Dict):
+        self.config = config
 
-        Args:
-            toolset (dict): Dictionary containing parameters for different steps
-
-        Return:
-            None
-        """
-        pass
-
-    def _feature_extraction(
-        self, toolset: Dict
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _feature_extraction(self, fpaths: List[str]):
         """
         Feature extraction step for the algorithm.
 
         Args:
-            toolset (dict): Dictionary containing parameters for different steps
-
-        Return:
-            Tuple of dictionary
+            fpaths (List[str]): A list of input image filepaths.
         """
-        self.dataset = toolset["dataset"]
-        return {}, {}
+        for fpath in fpaths:
+            logging.info(f"Extracting features for {fpath}")
+        features = {}, {}
+        return features
 
-    def _world_detection(self, toolset: str) -> str:
+    def _world_detection(self, features: dict, red_light: str = ""):
         """
-        Detect change in world ( Novelty has been introduced ).
+        Detect change in world (Novelty has been introduced).
 
         Args:
-            toolset (dict): Dictionary containing parameters for different steps
+            features (dict):
 
         Return:
             path to csv file containing the results for change in world
         """
-        return self.dataset
+        return ""
 
     def _novelty_classification(self, toolset: str) -> str:
         """
@@ -85,21 +73,18 @@ class MockDetector():
         Return:
             path to csv file containing the results for novelty classification step
         """
-        return self.dataset
+        return ""
 
-    def _novelty_adaption(self, toolset: str) -> None:
+    def _novelty_adaption(self, feedback):
         """
         Update models based on novelty classification and characterization.
-
-        Args:
-            toolset (dict): Dictionary containing parameters for different steps
 
         Return:
             None
         """
         pass
 
-    def _novelty_characterization(self, toolset: str) -> str:
+    def _novelty_characterization(self, features: dict):
         """
         Characterize novelty by clustering different novel samples.
 
@@ -109,4 +94,4 @@ class MockDetector():
         Return:
             path to csv file containing the results for novelty characterization step
         """
-        return self.dataset
+        return ""
