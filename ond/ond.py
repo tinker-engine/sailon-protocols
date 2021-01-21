@@ -14,14 +14,11 @@ class ONDProtocol(tinker.protocol.Protocol):
         super().__init__()
         self.interface = DummyInterface()
 
-        # The `toolset` approach will ultimately be replaced.
-        self.toolset = {}
-
     def get_config(self):
         return {
             "domain": "image_classification",
             "test_ids": [],
-            "novelty_detector_class": "OND_5_14_A1",
+            "novelty_detector_class": "",
             "seed": "seed",
             "dataset_root": "",
             "feature_extraction_only": False,
@@ -57,11 +54,8 @@ class ONDProtocol(tinker.protocol.Protocol):
         config = self.get_config()
         config.update(config_)
 
-        # Use toolset for now for initial testing.
-        self.toolset.update(config)
-
-        # The ultimate goal is to let smqtk handle the algorithm.
-        algorithm = MockDetector(self.toolset)
+        # smqtk will ultimately handle retrieval of the algorithm.
+        algorithm = MockDetector()
 
         session_id = self.interface.new_session(
             test_ids=config["test_ids"], protocol="OND",
@@ -70,22 +64,22 @@ class ONDProtocol(tinker.protocol.Protocol):
             hints=config["hints"]
         )
 
-        self.toolset["session_id"] = session_id
-
         for test_id in config["test_ids"]:
-            self.toolset["test_id"] = test_id
-            self.toolset["test_type"] = ""
-
             # Assume save_attributes == False and skip for now.
-            # Assume no red light image for now.
-            self.toolset["redlight_image"] = ""
+            test_metadata = self.interface.get_test_metadata(
+                session_id=session_id,
+                test_id=test_id
+            )
+
+            test_params = {}
+
+            red_light = test_metadata.get("red_light", "")
 
             # Assume no feedback_params attribute for now.
 
-            algorithm.execute(self.toolset, "Initialize")
-            self.toolset["image_features"] = {}
-            self.toolset["dataset_root"] = config["dataset_root"]
-            self.toolset["dataset_ids"] = []
+            algorithm.execute("Initialize", config)
+
+            test_params["image_features"] = {}
 
             # Assume save_features == False and skip for now.
 
@@ -93,7 +87,6 @@ class ONDProtocol(tinker.protocol.Protocol):
             end_of_dataset = False
 
             while not end_of_dataset:
-                self.toolset["round_id"] = round_id
                 file_list = self.interface.dataset_request(
                     session_id, test_id, round_id
                 )
@@ -101,12 +94,28 @@ class ONDProtocol(tinker.protocol.Protocol):
                 if file_list is not None:
                     # TODO: In legacy code, why is the file handle stored in
                     # toolset?
-                    self.toolset["dataset"] = file_list
-                    self.toolset["dataset_ids"].extend(file_list)
+                    #self.toolset["dataset_ids"].extend(file_list)
 
-                    # TODO: Saved features.
-                    x, y = algorithm.execute(self.toolset, "FeatureExtraction")
+                    # TODO: Saved features (assume not using for now).
+                    features = algorithm.execute("FeatureExtraction", file_list)
+
+                    results = {}
+                    results["detection"] = algorithm.execute(
+                        "WorldDetection", features, red_light
+                    )
+                    results["classification"] = algorithm.execute(
+                        "NoveltyClassification", features
+                    )
+
+                    if config["use_feedback"]:
+                        algorithm.execute("NoveltyAdaption", None)
+
+                    results["characterization"] = algorithm.execute(
+                        "NoveltyCharacterization", features
+                    )
                 else:
                     end_of_dataset = True
 
                 round_id += 1
+
+        self.interface.terminate_session(session_id)
