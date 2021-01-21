@@ -77,7 +77,7 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             # Assume no feedback_params attribute for now.
 
-            algorithm.execute("Initialize", config)
+            algorithm.execute("Initialize", config["detector_config"])
 
             test_params["image_features"] = {}
 
