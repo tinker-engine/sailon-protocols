@@ -75,46 +75,43 @@ class DummyInterface():
         if self.session is None:
             raise RuntimeError("Invalid session; call Interface.new_session()")
 
-        # This is the metadata from OND.47392.000000.8901_metadata.json.
-        # For initial testing, red light will be ignored.
-        # TODO: Reduce round size for testing?
         metadata = {
-            "known_classes": "413",
-            "max_novel_classes": "413",
+            "known_classes": 413,
+            "max_novel_classes": 413,
             "protocol": "OND",
-            #"red_light": "test/test_images/images_205000_to_210000/205023.jpeg",
-            #"round_size": 128
+            "red_light": "example_images/image3.jpg",
             "round_size": 2,
         }
         return metadata
 
-    def dataset_request(
-        self, session_id: str, test_id: str, round_id: int
-    ) -> IO:
+    def dataset_request(self, session_id: str, test_id: str, round_id: int):
         """
         This method mocks reading the csv file of image filenames (based on
         the session id and test id).
+
+        Returns: file_list
+            List of filepaths (all filepaths for the given `test_id` if
+            `round_id` is None, or filepaths corresponding to the given integer
+            `round_id` for the round size defined in the test metadata), or
+            `None` if there are no files in the specified `round_id`.
         """
         metadata = self.get_test_metadata(session_id, test_id, api_call=False)
         test_id_fpath = "sample_test.csv"
 
         with open(test_id_fpath, "r") as f:
             csv_reader = csv.reader(f, delimiter=",")
-            lines = [
-                line[0] for line in csv_reader
-                if (line and line[0].strip("\n\t\"',."))
-            ]
+            lines = []
+            for line in csv_reader:
+                if line:
+                    lines.append(line[0].strip("\n\t\"',."))
 
         file_list = None
 
         start_idx = 0
         end_idx = len(lines)
         if round_id is not None:
-            # TODO: error handling if round size undefined or invalid round id.
-            round_id = int(round_id)
-            round_size = int(metadata["round_size"])
-            start_idx = round_id * round_size
-            end_idx = start_idx + round_size
+            start_idx = round_id * metadata["round_size"]
+            end_idx = start_idx + metadata["round_size"]
 
         if start_idx < len(lines):
             file_list = lines[start_idx:end_idx]
@@ -143,5 +140,5 @@ class DummyInterface():
         """
         pass
 
-    def terminate_tession(self, session_id: str):
+    def terminate_session(self, session_id: str):
         self.session.termination = True
