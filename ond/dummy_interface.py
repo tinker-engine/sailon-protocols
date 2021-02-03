@@ -1,3 +1,6 @@
+import csv
+import datetime
+import io
 from typing import List, Dict, IO
 import uuid
 
@@ -72,44 +75,46 @@ class DummyInterface():
         if self.session is None:
             raise RuntimeError("Invalid session; call Interface.new_session()")
 
-        # This is the metadata from OND.47392.000000.8901_metadata.json.
-        # For initial testing, red light will be ignored.
-        # TODO: Reduce round size for testing?
         metadata = {
-            "known_classes": "413",
-            "max_novel_classes": "413",
+            "known_classes": 413,
+            "max_novel_classes": 413,
             "protocol": "OND",
-            #"red_light": "test/test_images/images_205000_to_210000/205023.jpeg",
-            "round_size": 128
+            "red_light": "example_images/image3.jpg",
+            "round_size": 2,
         }
         return metadata
 
-    def dataset_request(session_id: str, test_id: str, round_id: int) -> IO:
+    def dataset_request(self, session_id: str, test_id: str, round_id: int):
         """
         This method mocks reading the csv file of image filenames (based on
         the session id and test id).
+
+        Returns: file_list
+            List of filepaths (all filepaths for the given `test_id` if
+            `round_id` is None, or filepaths corresponding to the given integer
+            `round_id` for the round size defined in the test metadata), or
+            `None` if there are no files in the specified `round_id`.
         """
         metadata = self.get_test_metadata(session_id, test_id, api_call=False)
+        test_id_fpath = "sample_test.csv"
 
-        # Ignore `round_id` for now and simply return a file handle for the
-        # whole file instead of a chunk of the csv file.
+        with open(test_id_fpath, "r") as f:
+            csv_reader = csv.reader(f, delimiter=",")
+            lines = []
+            for line in csv_reader:
+                if line:
+                    lines.append(line[0].strip("\n\t\"',."))
+
+        file_list = None
+
+        start_idx = 0
+        end_idx = len(lines)
         if round_id is not None:
-            # Create a temporary file handle pointing to a temp file that
-            # contains only the portion of the test id csv file containing
-            # the chunk of filenames for the current round.
-            #round_pos = int(round_id) * int(metadata["round_size"])
-            pass
+            start_idx = round_id * metadata["round_size"]
+            end_idx = start_idx + metadata["round_size"]
 
-        fpath = "sample_test.csv"
-        file_ = open(fpath, "rb")
-
-        log_session(
-            self.results_folder,
-            session_id,
-            test_id=test_id,
-            round_id=round_id,
-            activity="data_request"
-        )
+        if start_idx < len(lines):
+            file_list = lines[start_idx:end_idx]
 
         # Refactor and update this functionality to match log_session for
         # data_request, test, and round activities from sail-on-api.
@@ -121,7 +126,7 @@ class DummyInterface():
             },
         }
 
-        return file_
+        return file_list
 
     def post_results(
         self,
@@ -135,5 +140,5 @@ class DummyInterface():
         """
         pass
 
-    def terminate_tession(self, session_id: str):
+    def terminate_session(self, session_id: str):
         self.session.termination = True
