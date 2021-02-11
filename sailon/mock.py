@@ -1,12 +1,13 @@
 """Mocks mainly used for testing protocols (from legacy sail-on-client)."""
 
+import logging
 from typing import Any, Callable, Dict, List, Tuple
 
-import logging
+import tinker
 import torch
 
 
-class MockDetector():
+class MockDetector(tinker.algorithm.Algorithm):
     """Mock Detector for testing image classification protocols."""
 
     def __init__(self):
@@ -24,6 +25,12 @@ class MockDetector():
             "NoveltyAdaption": self._novelty_adaption,
             "NoveltyCharacterization": self._novelty_characterization,
         }
+
+    def get_config(self):
+        """
+        Implementation of smqtk Algorithm abstract method.
+        """
+        return {}
 
     def execute(self, step_descriptor: str, *args, **kwargs):
         """

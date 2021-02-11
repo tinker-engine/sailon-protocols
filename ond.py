@@ -1,10 +1,8 @@
-import sys
-sys.path.append(".")
-
 import itertools
 
-from dummy_interface import DummyInterface
-from mock import MockDetector
+#from dummy_interface import DummyInterface
+#from mock import MockDetector
+from sailon import DummyInterface, MockDetector
 
 import tinker
 
