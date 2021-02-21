@@ -28,6 +28,7 @@ class MockDetector(tinker.algorithm.Algorithm):
             "NoveltyAdaption": self._novelty_adaption,
             "NoveltyCharacterization": self._novelty_characterization,
         }
+        self.red_light_ind = False
 
     def get_config(self):
         """
@@ -73,17 +74,39 @@ class MockDetector(tinker.algorithm.Algorithm):
             logits[fpath] = np.random.randn(num_classes)
         return features, logits
 
-    def _world_detection(self, features: dict, red_light: str = ""):
+    def _world_detection(
+        self, features_dict: dict, logits_dict: dict, red_light_image: str = ""
+    ):
         """
-        Detect change in world (Novelty has been introduced).
+        World detection on image features.
 
         Args:
-            features (dict):
+            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective features.
+            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective logits.
+            red_light_image (str): TODO
 
         Return:
             path to csv file containing the results for change in world
         """
-        return ""
+        # TODO: Does `logits_dict` need to be an argument to this method?
+
+        # TODO: programmatically construct output filepath.
+        dst_fpath = "world_detection.csv"
+
+        if red_light_image in features_dict:
+            self.red_light_ind = True
+
+        prediction = 1 if self.red_light_ind else 0
+
+        with open(dst_fpath, "w") as f:
+            for image_id in features_dict:
+                f.write("f{image_id},{prediction}\n")
+
+        return dst_fpath
 
     def _novelty_classification(self, toolset: str) -> str:
         """
