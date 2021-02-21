@@ -1,10 +1,13 @@
 """Mocks mainly used for testing protocols (from legacy sail-on-client)."""
 
 import logging
+import random
 from typing import Any, Callable, Dict, List, Tuple
 
-import tinker
+import numpy as np
 import torch
+
+import tinker
 
 
 class MockDetector(tinker.algorithm.Algorithm):
@@ -52,11 +55,23 @@ class MockDetector(tinker.algorithm.Algorithm):
 
         Args:
             fpaths (List[str]): A list of input image filepaths.
+
+        Returns:
+            tuple: (features_dict, logits_dict)
+                - features_dict (dict): A dict containing a feature vector for
+                  each input image in `fpaths`.
+                - logits_dict (dict): A dict of logits for each input image.
         """
+        features_dict = {}
+        logits_dict = {}
+
+        num_classes = 80
+        num_features = random.randint(10, 100)
         for fpath in fpaths:
             logging.info(f"Extracting features for {fpath}")
-        features = {}, {}
-        return features
+            features[fpath] = np.random.randn(num_features)
+            logits[fpath] = np.random.randn(num_classes)
+        return features, logits
 
     def _world_detection(self, features: dict, red_light: str = ""):
         """
