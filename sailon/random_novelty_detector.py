@@ -9,7 +9,6 @@ import pandas as pd
 import torch
 
 from smqtk_core import Configurable, Pluggable
-import tinker
 
 
 class RandomNoveltyDetector(Configurable, Pluggable):
@@ -66,7 +65,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         features_dict = {}
         logits_dict = {}
 
-        num_classes = 80
+        num_classes = 413
         num_features = random.randint(10, 100)
         for fpath in fpaths:
             logging.info(f"Extracting features for {fpath}")
