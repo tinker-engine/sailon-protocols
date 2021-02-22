@@ -1,4 +1,5 @@
 import itertools
+import logging
 
 #from dummy_interface import DummyInterface
 #from mock import MockDetector
@@ -85,31 +86,30 @@ class ONDProtocol(tinker.protocol.Protocol):
             end_of_dataset = False
 
             while not end_of_dataset:
+                logging.info(f"Beginning round {round_id}")
                 file_list = self.interface.dataset_request(
                     session_id, test_id, round_id
                 )
 
                 if file_list is not None:
-                    # TODO: In legacy code, why is the file handle stored in
-                    # toolset?
-                    #self.toolset["dataset_ids"].extend(file_list)
-
                     # TODO: Saved features (assume not using for now).
-                    features = algorithm.execute("FeatureExtraction", file_list)
+                    features_dict, logits_dict = algorithm.execute(
+                        "FeatureExtraction", file_list
+                    )
 
                     results = {}
                     results["detection"] = algorithm.execute(
-                        "WorldDetection", features, red_light
+                        "WorldDetection", features_dict, logits_dict, red_light
                     )
                     results["classification"] = algorithm.execute(
-                        "NoveltyClassification", features
+                        "NoveltyClassification", features_dict, logits_dict
                     )
 
                     if config["use_feedback"]:
                         algorithm.execute("NoveltyAdaption", None)
 
                     results["characterization"] = algorithm.execute(
-                        "NoveltyCharacterization", features
+                        "NoveltyCharacterization", features_dict
                     )
                 else:
                     end_of_dataset = True
