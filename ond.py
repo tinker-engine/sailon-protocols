@@ -61,7 +61,6 @@ class ONDProtocol(tinker.protocol.Protocol):
         )
 
         for test_id in config["test_ids"]:
-            # Assume save_attributes == False and skip for now.
             test_metadata = self.interface.get_test_metadata(
                 session_id=session_id,
                 test_id=test_id
@@ -77,8 +76,6 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             test_params["image_features"] = {}
 
-            # Assume save_features == False and skip for now.
-
             round_id = 0
             end_of_dataset = False
 
@@ -89,7 +86,6 @@ class ONDProtocol(tinker.protocol.Protocol):
                 )
 
                 if file_list is not None:
-                    # TODO: Saved features (assume not using for now).
                     features_dict, logits_dict = algorithm.execute(
                         "FeatureExtraction", file_list
                     )
@@ -106,6 +102,11 @@ class ONDProtocol(tinker.protocol.Protocol):
 
                     if config["use_feedback"]:
                         algorithm.execute("NoveltyAdaption", None)
+
+                    if config["save_features"]:
+                        logging.info(
+                            f"Writing features to {config['save_features']}"
+                        )
 
                     results["characterization"] = algorithm.execute(
                         "NoveltyCharacterization", features_dict, logits_dict
