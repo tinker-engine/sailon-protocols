@@ -5,6 +5,7 @@ import random
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
 
 import tinker
@@ -70,13 +71,13 @@ class MockDetector(tinker.algorithm.Algorithm):
         num_features = random.randint(10, 100)
         for fpath in fpaths:
             logging.info(f"Extracting features for {fpath}")
-            features[fpath] = np.random.randn(num_features)
-            logits[fpath] = np.random.randn(num_classes)
-        return features, logits
+            features_dict[fpath] = np.random.randn(num_features)
+            logits_dict[fpath] = np.random.randn(num_classes)
+        return features_dict, logits_dict
 
     def _world_detection(
         self, features_dict: dict, logits_dict: dict, red_light_image: str = ""
-    ):
+    ) -> str:
         """
         World detection on image features.
 
@@ -89,7 +90,7 @@ class MockDetector(tinker.algorithm.Algorithm):
                 respective logits.
             red_light_image (str): TODO
 
-        Return:
+        Returns:
             path to csv file containing the results for change in world
         """
         # TODO: Does `logits_dict` need to be an argument to this method?
@@ -104,21 +105,47 @@ class MockDetector(tinker.algorithm.Algorithm):
 
         with open(dst_fpath, "w") as f:
             for image_id in features_dict:
-                f.write("f{image_id},{prediction}\n")
+                f.write(f"{image_id},{prediction}\n")
+        logging.info(f"Writing world detection file {dst_fpath}")
 
         return dst_fpath
 
-    def _novelty_classification(self, toolset: str) -> str:
+    def _novelty_classification(
+        self, features_dict: dict, logits_dict: dict
+    ) -> str:
         """
-        Classify data provided in known classes and unknown class.
+        Novelty classification on image features.
 
         Args:
-            toolset (dict): Dictionary containing parameters for different steps
-
-        Return:
-            path to csv file containing the results for novelty classification step
+            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective features.
+            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective logits.
+        Returns:
+            path to csv file containing the novelty classification results
         """
-        return ""
+        dst_fpath = "novelty_classification.csv"
+
+        if self.red_light_ind:
+            novelty_predictions = np.ones((len(logits_dict), 1))
+        else:
+            novelty_predictions = np.zeros((len(logits_dict), 1))
+
+        logits_arr = np.array(tuple(logits_dict.values()))
+        softmax_scores = np.divide(
+            np.exp(logits_arr),
+            np.sum(np.exp(logits_arr), axis=1)[:, np.newaxis]
+        )
+
+        predictions = np.hstack((novelty_predictions, softmax_scores))
+
+        df = pd.DataFrame(zip(logits_dict.keys(), *predictions.T))
+        df.to_csv(dst_fpath, index=False, header=False, float_format="%.4f")
+        logging.info(f"Writing novelty classification file {dst_fpath}")
+
+        return dst_fpath
 
     def _novelty_adaption(self, feedback):
         """
