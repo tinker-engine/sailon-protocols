@@ -75,7 +75,8 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         return features_dict, logits_dict
 
     def _world_detection(
-        self, features_dict: dict, logits_dict: dict, red_light_image: str = ""
+        self, features_dict: dict, logits_dict: dict,
+        red_light_image: str = "", round_id: int = None
     ) -> str:
         """
         World detection on image features.
@@ -94,7 +95,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         # TODO: Does `logits_dict` need to be an argument to this method?
 
-        dst_fpath = "world_detection.csv"
+        dst_fpath = f"world_detection_{round_id}.csv"
 
         if red_light_image in features_dict:
             self.red_light_ind = True
@@ -109,7 +110,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         return dst_fpath
 
     def _novelty_classification(
-        self, features_dict: dict, logits_dict: dict
+        self, features_dict: dict, logits_dict: dict, round_id int = None
     ) -> str:
         """
         Novelty classification on image features.
@@ -124,7 +125,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Returns:
             path to csv file containing the novelty classification results
         """
-        dst_fpath = "novelty_classification.csv"
+        dst_fpath = f"novelty_classification_{round_id}.csv"
 
         if self.red_light_ind:
             novelty_predictions = np.ones((len(logits_dict), 1))

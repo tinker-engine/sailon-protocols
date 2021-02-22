@@ -96,17 +96,19 @@ class ONDProtocol(tinker.protocol.Protocol):
 
                     results = {}
                     results["detection"] = algorithm.execute(
-                        "WorldDetection", features_dict, logits_dict, red_light
+                        "WorldDetection", features_dict, logits_dict,
+                        red_light, round_id=round_id
                     )
                     results["classification"] = algorithm.execute(
-                        "NoveltyClassification", features_dict, logits_dict
+                        "NoveltyClassification", features_dict, logits_dict,
+                        round_id=round_id
                     )
 
                     if config["use_feedback"]:
                         algorithm.execute("NoveltyAdaption", None)
 
                     results["characterization"] = algorithm.execute(
-                        "NoveltyCharacterization", features_dict
+                        "NoveltyCharacterization", features_dict, logits_dict
                     )
                 else:
                     end_of_dataset = True
