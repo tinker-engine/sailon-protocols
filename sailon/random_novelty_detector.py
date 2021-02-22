@@ -104,12 +104,12 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         with open(dst_fpath, "w") as f:
             for image_id in features_dict:
                 f.write(f"{image_id},{prediction}\n")
-        logging.info(f"Writing world detection file {dst_fpath}")
+        logging.info(f"Writing world detection results to {dst_fpath}")
 
         return dst_fpath
 
     def _novelty_classification(
-        self, features_dict: dict, logits_dict: dict, round_id int = None
+        self, features_dict: dict, logits_dict: dict, round_id: int = None
     ) -> str:
         """
         Novelty classification on image features.
@@ -141,7 +141,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         df = pd.DataFrame(zip(logits_dict.keys(), *predictions.T))
         df.to_csv(dst_fpath, index=False, header=False, float_format="%.4f")
-        logging.info(f"Writing novelty classification file {dst_fpath}")
+        logging.info(f"Writing novelty classification results to {dst_fpath}")
 
         return dst_fpath
 
@@ -154,7 +154,9 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         pass
 
-    def _novelty_characterization(self, features_dict: dict, logits_dict: dict):
+    def _novelty_characterization(
+        self, features_dict: dict, logits_dict: dict, round_id: int = None
+    ):
         """
         Characterize novelty by clustering different novel samples.
 
@@ -163,4 +165,5 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Returns:
             path to csv file containing the results for novelty characterization step
         """
-        return ""
+        dst_fpath = f"novelty_characterization_{round_id}.csv"
+        return dst_fpath
