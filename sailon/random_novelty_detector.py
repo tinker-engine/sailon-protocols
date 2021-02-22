@@ -11,9 +11,7 @@ import torch
 import tinker
 
 
-class MockDetector(tinker.algorithm.Algorithm):
-    """Mock Detector for testing image classification protocols."""
-
+class RandomNoveltyDetector(tinker.algorithm.Algorithm):
     def __init__(self):
         """
         Detector constructor.

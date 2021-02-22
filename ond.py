@@ -1,10 +1,7 @@
 import itertools
 import logging
 
-#from dummy_interface import DummyInterface
-#from mock import MockDetector
-from sailon import DummyInterface, MockDetector
-
+from sailon import DummyInterface, RandomNoveltyDetector
 import tinker
 
 
@@ -54,12 +51,12 @@ class ONDProtocol(tinker.protocol.Protocol):
         config.update(config_)
 
         # smqtk will ultimately handle retrieval of the algorithm.
-        algorithm = MockDetector()
+        algorithm = RandomNoveltyDetector()
 
         session_id = self.interface.new_session(
             test_ids=config["test_ids"], protocol="OND",
             domain=config["domain"],
-            novelty_detector_spec="1.0.0.Mock",
+            novelty_detector_spec="1.0.0.Random",
             hints=config["hints"]
         )
 
