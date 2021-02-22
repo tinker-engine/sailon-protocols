@@ -96,14 +96,8 @@ class DummyInterface():
             `None` if there are no files in the specified `round_id`.
         """
         metadata = self.get_test_metadata(session_id, test_id, api_call=False)
-        #test_id_fpath = "sample_test.csv"
 
-        #with open(test_id_fpath, "r") as f:
-        #    csv_reader = csv.reader(f, delimiter=",")
-        #    lines = []
-        #    for line in csv_reader:
-        #        if line:
-        #            lines.append(line[0].strip("\n\t\"',."))
+        # TODO: read/write file instead of hardcoding filenames.
 
         lines = [
             "example_images/image1.jpg",

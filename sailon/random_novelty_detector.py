@@ -8,10 +8,11 @@ import numpy as np
 import pandas as pd
 import torch
 
+from smqtk_core import Configurable, Pluggable
 import tinker
 
 
-class RandomNoveltyDetector(tinker.algorithm.Algorithm):
+class RandomNoveltyDetector(Configurable, Pluggable):
     def __init__(self):
         """
         Detector constructor.
@@ -46,7 +47,7 @@ class RandomNoveltyDetector(tinker.algorithm.Algorithm):
         logging.info(f"Executing {step_descriptor}")
         return self.step_dict[step_descriptor](*args, **kwargs)
 
-    def _initialize(self, config: Dict):
+    def _initialize(self, config: dict):
         self.config = config
 
     def _feature_extraction(self, fpaths: List[str]):
@@ -93,7 +94,6 @@ class RandomNoveltyDetector(tinker.algorithm.Algorithm):
         """
         # TODO: Does `logits_dict` need to be an argument to this method?
 
-        # TODO: programmatically construct output filepath.
         dst_fpath = "world_detection.csv"
 
         if red_light_image in features_dict:
@@ -145,7 +145,7 @@ class RandomNoveltyDetector(tinker.algorithm.Algorithm):
 
         return dst_fpath
 
-    def _novelty_adaption(self, feedback):
+    def _novelty_adaption(self, features_dict: dict):
         """
         Update models based on novelty classification and characterization.
 
@@ -154,14 +154,13 @@ class RandomNoveltyDetector(tinker.algorithm.Algorithm):
         """
         pass
 
-    def _novelty_characterization(self, features: dict):
+    def _novelty_characterization(self, features_dict: dict, logits_dict: dict):
         """
         Characterize novelty by clustering different novel samples.
 
         Args:
-            toolset (dict): Dictionary containing parameters for different steps
 
-        Return:
+        Returns:
             path to csv file containing the results for novelty characterization step
         """
         return ""
