@@ -1,2 +1,2 @@
-from .mock import MockDetector
+from .random_novelty_detector import RandomNoveltyDetector
 from .dummy_interface import DummyInterface
