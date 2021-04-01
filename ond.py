@@ -72,7 +72,7 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             # Assume no feedback_params attribute for now.
 
-            algorithm.execute("Initialize", config["detector_config"])
+            algorithm.initialize(config["detector_config"])
 
             test_params["image_features"] = {}
 
@@ -86,30 +86,28 @@ class ONDProtocol(tinker.protocol.Protocol):
                 )
 
                 if file_list is not None:
-                    features_dict, logits_dict = algorithm.execute(
-                        "FeatureExtraction", file_list
+                    features_dict, logits_dict = algorithm.feature_extraction(
+                        file_list
                     )
 
                     results = {}
-                    results["detection"] = algorithm.execute(
-                        "WorldDetection", features_dict, logits_dict,
-                        red_light, round_id=round_id
+                    results["detection"] = algorithm.world_detection(
+                        features_dict, logits_dict, red_light, round_id=round_id
                     )
-                    results["classification"] = algorithm.execute(
-                        "NoveltyClassification", features_dict, logits_dict,
-                        round_id=round_id
+                    results["classification"] = algorithm.novelty_classification(
+                        features_dict, logits_dict, round_id=round_id
                     )
 
                     if config["use_feedback"]:
-                        algorithm.execute("NoveltyAdaption", None)
+                        algorithm.novelty_adaption(None)
 
                     if config["save_features"]:
                         logging.info(
                             f"Writing features to {config['save_features']}"
                         )
 
-                    results["characterization"] = algorithm.execute(
-                        "NoveltyCharacterization", features_dict, logits_dict
+                    results["characterization"] = algorithm.novelty_characterization(
+                        features_dict, logits_dict
                     )
                 else:
                     end_of_dataset = True
