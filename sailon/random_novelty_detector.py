@@ -19,14 +19,6 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Args:
             config (dict): Algorithm configuration parameters.
         """
-        self.step_dict: Dict[str, Callable] = {
-            "Initialize": self._initialize,
-            "FeatureExtraction": self._feature_extraction,
-            "WorldDetection": self._world_detection,
-            "NoveltyClassification": self._novelty_classification,
-            "NoveltyAdaption": self._novelty_adaption,
-            "NoveltyCharacterization": self._novelty_characterization,
-        }
         self.red_light_ind = False
 
     def get_config(self):
@@ -35,21 +27,10 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         return {}
 
-    def execute(self, step_descriptor: str, *args, **kwargs):
-        """
-        Execute method used by the protocol to run different steps associated
-        with the algorithm.
-
-        Args:
-            step_descriptor (str): Name of the step.
-        """
-        logging.info(f"Executing {step_descriptor}")
-        return self.step_dict[step_descriptor](*args, **kwargs)
-
-    def _initialize(self, config: dict):
+    def initialize(self, config: dict):
         self.config = config
 
-    def _feature_extraction(self, fpaths: List[str]):
+    def feature_extraction(self, fpaths: List[str]):
         """
         Feature extraction step for the algorithm.
 
@@ -73,7 +54,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
             logits_dict[fpath] = np.random.randn(num_classes)
         return features_dict, logits_dict
 
-    def _world_detection(
+    def world_detection(
         self, features_dict: dict, logits_dict: dict,
         red_light_image: str = "", round_id: int = None
     ) -> str:
@@ -108,7 +89,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         return dst_fpath
 
-    def _novelty_classification(
+    def novelty_classification(
         self, features_dict: dict, logits_dict: dict, round_id: int = None
     ) -> str:
         """
@@ -145,7 +126,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         return dst_fpath
 
-    def _novelty_adaption(self, features_dict: dict):
+    def novelty_adaption(self, features_dict: dict):
         """
         Update models based on novelty classification and characterization.
 
@@ -154,7 +135,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         pass
 
-    def _novelty_characterization(
+    def novelty_characterization(
         self, features_dict: dict, logits_dict: dict, round_id: int = None
     ):
         """
