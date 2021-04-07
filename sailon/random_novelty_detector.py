@@ -10,6 +10,8 @@ import torch
 
 from smqtk_core import Configurable, Pluggable
 
+logger = logging.getLogger(__name__)
+
 
 class RandomNoveltyDetector(Configurable, Pluggable):
     def __init__(self):
@@ -43,7 +45,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Args:
             step_descriptor (str): Name of the step.
         """
-        logging.info(f"Executing {step_descriptor}")
+        logger.info(f"Executing {step_descriptor}")
         return self.step_dict[step_descriptor](*args, **kwargs)
 
     def _initialize(self, config: dict):
@@ -68,7 +70,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         num_classes = 413
         num_features = random.randint(10, 100)
         for fpath in fpaths:
-            logging.info(f"Extracting features for {fpath}")
+            logger.info(f"Extracting features for {fpath}")
             features_dict[fpath] = np.random.randn(num_features)
             logits_dict[fpath] = np.random.randn(num_classes)
         return features_dict, logits_dict
@@ -104,7 +106,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         with open(dst_fpath, "w") as f:
             for image_id in features_dict:
                 f.write(f"{image_id},{prediction}\n")
-        logging.info(f"Writing world detection results to {dst_fpath}")
+        logger.info(f"Writing world detection results to {dst_fpath}")
 
         return dst_fpath
 
@@ -141,7 +143,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         df = pd.DataFrame(zip(logits_dict.keys(), *predictions.T))
         df.to_csv(dst_fpath, index=False, header=False, float_format="%.4f")
-        logging.info(f"Writing novelty classification results to {dst_fpath}")
+        logger.info(f"Writing novelty classification results to {dst_fpath}")
 
         return dst_fpath
 
