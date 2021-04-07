@@ -90,28 +90,30 @@ class ONDProtocol(tinker.protocol.Protocol):
                         "FeatureExtraction", file_list
                     )
 
-                    if not config["feature_extraction_only"]:
-                        results = {}
-                        results["detection"] = algorithm.execute(
-                            "WorldDetection", features_dict, logits_dict,
-                            red_light, round_id=round_id
-                        )
-                        results["classification"] = algorithm.execute(
-                            "NoveltyClassification", features_dict, logits_dict,
-                            round_id=round_id
+                    if config["feature_extraction_only"]:
+                        continue
+
+                    results = {}
+                    results["detection"] = algorithm.execute(
+                        "WorldDetection", features_dict, logits_dict,
+                        red_light, round_id=round_id
+                    )
+                    results["classification"] = algorithm.execute(
+                        "NoveltyClassification", features_dict, logits_dict,
+                        round_id=round_id
+                    )
+
+                    if config["use_feedback"]:
+                        algorithm.execute("NoveltyAdaption", None)
+
+                    if config["save_features"]:
+                        logging.info(
+                            f"Writing features to {config['save_features']}"
                         )
 
-                        if config["use_feedback"]:
-                            algorithm.execute("NoveltyAdaption", None)
-
-                        if config["save_features"]:
-                            logging.info(
-                                f"Writing features to {config['save_features']}"
-                            )
-
-                        results["characterization"] = algorithm.execute(
-                            "NoveltyCharacterization", features_dict, logits_dict
-                        )
+                    results["characterization"] = algorithm.execute(
+                        "NoveltyCharacterization", features_dict, logits_dict
+                    )
                 else:
                     end_of_dataset = True
 
