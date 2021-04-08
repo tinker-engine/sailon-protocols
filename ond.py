@@ -90,6 +90,9 @@ class ONDProtocol(tinker.protocol.Protocol):
                         "FeatureExtraction", file_list
                     )
 
+                    if config["feature_extraction_only"]:
+                        continue
+
                     results = {}
                     results["detection"] = algorithm.execute(
                         "WorldDetection", features_dict, logits_dict,
