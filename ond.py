@@ -5,6 +5,9 @@ from sailon import DummyInterface, RandomNoveltyDetector
 import tinker
 
 
+logger = logging.getLogger(__name__)
+
+
 class ONDProtocol(tinker.protocol.Protocol):
     def __init__(self):
         super().__init__()
@@ -80,7 +83,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             end_of_dataset = False
 
             while not end_of_dataset:
-                logging.info(f"Beginning round {round_id}")
+                logger.info(f"Beginning round {round_id}")
                 file_list = self.interface.dataset_request(
                     session_id, test_id, round_id
                 )
@@ -107,7 +110,7 @@ class ONDProtocol(tinker.protocol.Protocol):
                         algorithm.execute("NoveltyAdaption", None)
 
                     if config["save_features"]:
-                        logging.info(
+                        logger.info(
                             f"Writing features to {config['save_features']}"
                         )
 
