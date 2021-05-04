@@ -80,6 +80,17 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             algorithm.initialize(algo_config_params)
 
+            if config["use_saved_features"]:
+                features_path = pathlib.Path(config["save_dir"])
+                if features_path.isdir():
+                    features_path = features_path / f"{test_id}_features.pkl"
+                test_features = pickle.load(open(features_path, "rb"))
+            elif config["save_features"]:
+                test_features = {
+                    "features_dict": {},
+                    "logits_dict": {}
+                }
+
             round_id = 0
             end_of_dataset = False
             while not end_of_dataset:
@@ -100,13 +111,24 @@ class ONDProtocol(tinker.protocol.Protocol):
                     image_ids = [image_id.strip() for image_id in dataset_ids]
                     algo_test_params["dataset_ids"].extend(image_ids)
 
+                # Feature extraction
                 if config["use_saved_features"]:
-                    # TODO
-                    pass
+                    algo_test_data["features_dict"] = {}
+                    algo_test_data["logits_dict"] = {}
+
+                    algo_features_dict = algo_test_data["features_dict"]
+                    algo_logits_dict = algo_test_data["logits_dict"]
+
+                    test_features_dict = test_features["features_dict"]
+                    test_logits_dict = test_features["logits_dict"]
+
+                    for id_ in image_ids:
+                        algo_features_dict[id_] = test_features_dict[id_]
+                        algo_logits_dict[id_] = test_logits_dict[id_]
                 else:
                     (
                         algo_test_data["features_dict"],
-                        algo_test_data["logit_dict"]
+                        algo_test_data["logits_dict"]
                     ) = algorithm.feature_extraction(algo_test_params)
 
                     # TODO: save features
