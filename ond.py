@@ -46,6 +46,47 @@ class ONDProtocol(tinker.protocol.Protocol):
             },
         }
 
+    def _run_round(
+        self, algorithm, round_id: int, dataset_path: str,
+        algo_test_params: dict, algo_test_data: dict,
+        save_features: str = None, use_saved_features: bool = False,
+        use_feedback: bool = False
+    ):
+        with open(dataset_path, "r") as dataset:
+            dataset_ids = dataset.readlines()
+            image_ids = [image_id.strip() for image_id in dataset_ids]
+            algo_test_params["dataset_ids"].extend(image_ids)
+
+        if config["use_saved_features"]:
+            # TODO
+            pass
+        else:
+            (
+                algo_test_data["features_dict"],
+                algo_test_data["logit_dict"]
+            ) = algorithm.feature_extraction(algo_test_params)
+
+            # TODO: save features
+
+        results = {}
+
+        results["detection"] = algorithm.world_detection(
+            algo_test_params, algo_test_data
+        )
+
+        results["classification"] = algorithm.novelty_classification(
+            algo_test_params, algo_test_data
+        )
+
+        # TODO: post results
+
+        if config["use_feedback"]:
+            algorithm.novelty_adaption(algo_test_params, algo_test_data)
+
+        # TODO: round cleanup
+        return None
+
+
     def run_protocol(self, config_):
         config = self.get_config()
         config.update(config_)
@@ -84,50 +125,19 @@ class ONDProtocol(tinker.protocol.Protocol):
             end_of_dataset = False
             while not end_of_dataset:
                 logging.info(f"Beginning round {round_id}")
-
                 algo_test_data["round_id"] = round_id
 
                 try:
-                    dataset = self.interface.dataset_request(
+                    dataset_path = self.interface.dataset_request(
                         session_id, test_id, round_id
                     )
                 except RoundError:
                     end_of_dataset = True
                     continue
 
-                with open(dataset, "r") as dataset_:
-                    dataset_ids = dataset_.readlines()
-                    image_ids = [image_id.strip() for image_id in dataset_ids]
-                    algo_test_params["dataset_ids"].extend(image_ids)
-
-                if config["use_saved_features"]:
-                    # TODO
-                    pass
-                else:
-                    (
-                        algo_test_data["features_dict"],
-                        algo_test_data["logit_dict"]
-                    ) = algorithm.feature_extraction(algo_test_params)
-
-                    # TODO: save features
-
-                results = {}
-
-                results["detection"] = algorithm.world_detection(
-                    algo_test_params, algo_test_data
+                self._run_round(
+                    algorithm, round_id=round_id, dataset_path=dataset_path,
                 )
-
-                results["classification"] = algorithm.novelty_classification(
-                    algo_test_params, algo_test_data
-                )
-
-                # TODO: post results
-
-                if config["use_feedback"]:
-                    algorithm.novelty_adaption(algo_test_params, algo_test_data)
-
-                # TODO: round cleanup
-
                 round_id += 1
 
             if config["save_features"]:
