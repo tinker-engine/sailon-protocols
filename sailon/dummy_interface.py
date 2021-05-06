@@ -1,8 +1,14 @@
 import csv
 import datetime
-import io
-from typing import List, Dict, IO
+import os
+import tempfile
+from typing import List, Dict
 import uuid
+
+import cv2
+import numpy as np
+
+from .errors import RoundError
 
 
 class Session():
@@ -16,6 +22,20 @@ class Session():
             "hints": hints if hints is not None else [],
         }
         self.termination = False
+
+        # Create a temp directory and write several garbage images to it.
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.image_fpaths = []
+
+        image_w, image_h = (128, 128)
+        num_images = 5
+        for i in range(num_images):
+            img = np.random.randint(
+                0, 255, (image_h, image_w, 3), dtype=np.uint8
+            )
+            fpath = os.path.join(self.temp_dir.name, f"image{i}.png")
+            cv2.imwrite(fpath, img)
+            self.image_fpaths.append(fpath)
 
 
 class DummyInterface():
@@ -33,7 +53,7 @@ class DummyInterface():
         domain: str,
         novelty_detector_spec: str,
         hints: List[str]
-    ):
+    ) -> str:
         """
         In the existing code, the test ids are read from the config. The test
         ids are passed to `Interface.session_request`, which passes them to
@@ -50,6 +70,9 @@ class DummyInterface():
                 class (eg, "1.0.0.OND_5_14_A1" if the config contains
                 `"novelty_detector_class": OND_5_14_A1"`).
             hints: Test-related hint/parameter (["red_light"]).
+
+        Returns:
+            uuid corresponding to the new session
         """
 
         session_id = str(uuid.uuid4())
@@ -84,7 +107,9 @@ class DummyInterface():
         }
         return metadata
 
-    def dataset_request(self, session_id: str, test_id: str, round_id: int):
+    def dataset_request(
+        self, session_id: str, test_id: str, round_id: int
+    ) -> str:
         """
         This method mocks reading the csv file of image filenames (based on
         the session id and test id).
@@ -97,25 +122,33 @@ class DummyInterface():
         """
         metadata = self.get_test_metadata(session_id, test_id, api_call=False)
 
-        # TODO: read/write file instead of hardcoding filenames.
-
-        lines = [
-            "example_images/image1.jpg",
-            "example_images/image2.jpg",
-            "example_images/image3.jpg",
-            "example_images/image4.jpg",
-        ]
+        # Get list of images created as part of this session.
+        image_fpaths = self.session.image_fpaths
 
         file_list = None
 
         start_idx = 0
-        end_idx = len(lines)
+        end_idx = len(image_fpaths)
         if round_id is not None:
             start_idx = round_id * metadata["round_size"]
             end_idx = start_idx + metadata["round_size"]
 
-        if start_idx < len(lines):
-            file_list = lines[start_idx:end_idx]
+        if start_idx < len(image_fpaths):
+            file_list = image_fpaths[start_idx:end_idx]
+
+        # To match existing functionality, write the list of files to a text
+        # file and return the path of the text file.
+        if file_list is None:
+            # End of dataset; no more files/rounds.
+            raise RoundError
+        else:
+            temp_dir = self.session.temp_dir.name
+            file_list_fname = f"round_{round_id}_file_list.csv"
+            file_list_fpath = os.path.join(temp_dir, file_list_fname)
+
+            with open(file_list_fpath, "w") as f:
+                for image_fpath in file_list:
+                    f.write(image_fpath + "\n")
 
         # Refactor and update this functionality to match log_session for
         # data_request, test, and round activities from sail-on-api.
@@ -127,7 +160,7 @@ class DummyInterface():
             },
         }
 
-        return file_list
+        return file_list_fpath
 
     def post_results(
         self,
