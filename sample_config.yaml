@@ -1,6 +1,5 @@
 domain: image_classification
 test_ids: [OND.sample.1]
 novelty_detector_class: RandomNoveltyDetector
-#feature_extraction_only: True
-#use_feedback: True
-#save_features: "saved_features.pkl"
+use_feedback: True
+save_features: "saved_features.pkl"

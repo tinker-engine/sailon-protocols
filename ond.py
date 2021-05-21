@@ -53,6 +53,8 @@ class ONDProtocol(tinker.protocol.Protocol):
         config = self.get_config()
         config.update(config_)
 
+        algo_config_params = config["detector_config"]
+
         # smqtk will ultimately handle retrieval of the algorithm.
         algorithm = RandomNoveltyDetector()
 
@@ -64,62 +66,87 @@ class ONDProtocol(tinker.protocol.Protocol):
         )
 
         for test_id in config["test_ids"]:
+            algo_test_params = {
+                "dataset_ids": [],
+                "dataset_root": config["dataset_root"],
+                "image_features": {},
+            }
+
             test_metadata = self.interface.get_test_metadata(
                 session_id=session_id,
                 test_id=test_id
             )
 
-            test_params = {}
+            algo_test_data = {}
+            if "red_light" in test_metadata:
+                algo_test_data["red_light_image"] = test_metadata.get(
+                    "red_light", ""
+                )
 
-            red_light = test_metadata.get("red_light", "")
-
-            # Assume no feedback_params attribute for now.
-
-            algorithm.execute("Initialize", config["detector_config"])
-
-            test_params["image_features"] = {}
+            algorithm.initialize(algo_config_params)
 
             round_id = 0
             end_of_dataset = False
-
             while not end_of_dataset:
                 logger.info(f"Beginning round {round_id}")
-                file_list = self.interface.dataset_request(
-                    session_id, test_id, round_id
+
+                algo_test_data["round_id"] = round_id
+
+                try:
+                    dataset = self.interface.dataset_request(
+                        session_id, test_id, round_id
+                    )
+                except RoundError:
+                    end_of_dataset = True
+                    continue
+
+                with open(dataset, "r") as dataset_:
+                    dataset_ids = dataset_.readlines()
+                    image_ids = [image_id.strip() for image_id in dataset_ids]
+                    algo_test_params["dataset_ids"].extend(image_ids)
+
+                if config["use_saved_features"]:
+                    # TODO
+                    pass
+                else:
+                    (
+                        algo_test_data["features_dict"],
+                        algo_test_data["logits_dict"]
+                    ) = algorithm.feature_extraction(algo_test_params)
+
+                    # TODO: save features
+
+                results = {}
+
+                results["detection"] = algorithm.world_detection(
+                    algo_test_params, algo_test_data
                 )
 
-                if file_list is not None:
-                    features_dict, logits_dict = algorithm.execute(
-                        "FeatureExtraction", file_list
-                    )
+                results["classification"] = algorithm.novelty_classification(
+                    algo_test_params, algo_test_data
+                )
 
-                    if config["feature_extraction_only"]:
-                        continue
+                # TODO: post results
 
-                    results = {}
-                    results["detection"] = algorithm.execute(
-                        "WorldDetection", features_dict, logits_dict,
-                        red_light, round_id=round_id
-                    )
-                    results["classification"] = algorithm.execute(
-                        "NoveltyClassification", features_dict, logits_dict,
-                        round_id=round_id
-                    )
+                if config["use_feedback"]:
+                    algorithm.novelty_adaption(algo_test_params, algo_test_data)
 
-                    if config["use_feedback"]:
-                        algorithm.execute("NoveltyAdaption", None)
-
-                    if config["save_features"]:
-                        logger.info(
-                            f"Writing features to {config['save_features']}"
-                        )
-
-                    results["characterization"] = algorithm.execute(
-                        "NoveltyCharacterization", features_dict, logits_dict
-                    )
-                else:
-                    end_of_dataset = True
+                # TODO: round cleanup
 
                 round_id += 1
+
+            if config["save_features"]:
+                # TODO: save features
+                logging.info(
+                    f"Writing features to {config['save_features']}"
+                )
+
+            # TODO: save attributes
+
+            results["characterization"] = algorithm.novelty_characterization(
+                algo_test_params, algo_test_data
+            )
+
+            # TODO: test cleanup
 
         self.interface.terminate_session(session_id)

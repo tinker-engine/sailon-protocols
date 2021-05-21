@@ -21,14 +21,6 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Args:
             config (dict): Algorithm configuration parameters.
         """
-        self.step_dict: Dict[str, Callable] = {
-            "Initialize": self._initialize,
-            "FeatureExtraction": self._feature_extraction,
-            "WorldDetection": self._world_detection,
-            "NoveltyClassification": self._novelty_classification,
-            "NoveltyAdaption": self._novelty_adaption,
-            "NoveltyCharacterization": self._novelty_characterization,
-        }
         self.red_light_ind = False
 
     def get_config(self):
@@ -37,26 +29,14 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         return {}
 
-    def execute(self, step_descriptor: str, *args, **kwargs):
-        """
-        Execute method used by the protocol to run different steps associated
-        with the algorithm.
+    def initialize(self, config_params: dict):
+        self.config_params = config_params
 
-        Args:
-            step_descriptor (str): Name of the step.
-        """
-        logger.info(f"Executing {step_descriptor}")
-        return self.step_dict[step_descriptor](*args, **kwargs)
-
-    def _initialize(self, config: dict):
-        self.config = config
-
-    def _feature_extraction(self, fpaths: List[str]):
+    def feature_extraction(
+        self, test_params: dict, test_data: dict
+    ) -> Tuple[dict, dict]:
         """
         Feature extraction step for the algorithm.
-
-        Args:
-            fpaths (List[str]): A list of input image filepaths.
 
         Returns:
             tuple: (features_dict, logits_dict)
@@ -69,32 +49,26 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         num_classes = 413
         num_features = random.randint(10, 100)
-        for fpath in fpaths:
-            logger.info(f"Extracting features for {fpath}")
-            features_dict[fpath] = np.random.randn(num_features)
-            logits_dict[fpath] = np.random.randn(num_classes)
+
+        with open(test_params["dataset"]) as dataset:
+            for fpath in dataset:
+                logging.info(f"Extracting features for {fpath}")
+                features_dict[fpath] = np.random.randn(num_features)
+                logits_dict[fpath] = np.random.randn(num_classes)
+
         return features_dict, logits_dict
 
-    def _world_detection(
-        self, features_dict: dict, logits_dict: dict,
-        red_light_image: str = "", round_id: int = None
-    ) -> str:
+    def world_detection(self, test_params: dict, test_data: dict) -> str:
         """
         World detection on image features.
-
-        Args:
-            features_dict (dict): Dict returned by :meth:`_feature_extraction`
-                where each key corresponds to an image and each value to its
-                respective features.
-            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
-                where each key corresponds to an image and each value to its
-                respective logits.
-            red_light_image (str): TODO
 
         Returns:
             path to csv file containing the results for change in world
         """
-        # TODO: Does `logits_dict` need to be an argument to this method?
+
+        round_id = test_data["round_id"]
+        red_light_image = test_data["red_light_image"]
+        features_dict = test_data["features_dict"]
 
         dst_fpath = f"world_detection_{round_id}.csv"
 
@@ -110,22 +84,18 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         return dst_fpath
 
-    def _novelty_classification(
-        self, features_dict: dict, logits_dict: dict, round_id: int = None
+    def novelty_classification(
+        self, test_params: dict, test_data: dict
     ) -> str:
         """
         Novelty classification on image features.
 
-        Args:
-            features_dict (dict): Dict returned by :meth:`_feature_extraction`
-                where each key corresponds to an image and each value to its
-                respective features.
-            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
-                where each key corresponds to an image and each value to its
-                respective logits.
         Returns:
             path to csv file containing the novelty classification results
         """
+        round_id = test_data["round_id"]
+        logits_dict = test_data["logits_dict"]
+
         dst_fpath = f"novelty_classification_{round_id}.csv"
 
         if self.red_light_ind:
@@ -147,7 +117,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         return dst_fpath
 
-    def _novelty_adaption(self, features_dict: dict):
+    def novelty_adaption(self, test_params: dict, test_data: dict):
         """
         Update models based on novelty classification and characterization.
 
@@ -156,9 +126,9 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         pass
 
-    def _novelty_characterization(
-        self, features_dict: dict, logits_dict: dict, round_id: int = None
-    ):
+    def novelty_characterization(
+        self, test_params: dict, test_data: dict
+    ) -> str:
         """
         Characterize novelty by clustering different novel samples.
 
@@ -167,5 +137,6 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Returns:
             path to csv file containing the results for novelty characterization step
         """
+        round_id = test_data["round_id"]
         dst_fpath = f"novelty_characterization_{round_id}.csv"
         return dst_fpath
