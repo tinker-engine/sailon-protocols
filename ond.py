@@ -68,7 +68,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             algo_test_params = {
                 "dataset_ids": [],
                 "dataset_root": config["dataset_root"],
-                "image_features": {},
+                "features": {},
             }
 
             test_metadata = self.interface.get_test_metadata(
@@ -140,8 +140,9 @@ class ONDProtocol(tinker.protocol.Protocol):
                         test_features["logits_dict"].update(
                             algo_test_data["logits_dict"]
                         )
-                        if config["feature_extraction_only"]:
-                            continue
+
+                    if config["feature_extraction_only"]:
+                        continue
 
                 results = {}
 
