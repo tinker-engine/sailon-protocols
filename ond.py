@@ -7,6 +7,9 @@ from sailon import DummyInterface, RandomNoveltyDetector
 import tinker
 
 
+logger = logging.getLogger(__name__)
+
+
 class ONDProtocol(tinker.protocol.Protocol):
     def __init__(self):
         super().__init__()
@@ -78,7 +81,9 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             algo_test_data = {}
             if "red_light" in test_metadata:
-                algo_test_data["red_light_image"] = test_metadata["red_light"]
+                algo_test_data["red_light_image"] = test_metadata.get(
+                    "red_light", ""
+                )
 
             algorithm.initialize(algo_config_params)
 
@@ -96,7 +101,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             round_id = 0
             end_of_dataset = False
             while not end_of_dataset:
-                logging.info(f"Beginning round {round_id}")
+                logger.info(f"Beginning round {round_id}")
 
                 algo_test_data["round_id"] = round_id
 
@@ -167,7 +172,7 @@ class ONDProtocol(tinker.protocol.Protocol):
                 features_dir = pathlib.Path(config["save_dir"])
                 features_dir.mkdir(exist_ok=True)
                 features_path = features_dir / f"{test_id}_features.pkl"
-                logging.info(
+                logger.info(
                     f"Writing features to {features_path}"
                 )
                 with open(features_path, "wb") as f:
@@ -179,7 +184,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             # TODO: save attributes
 
             results["characterization"] = algorithm.novelty_characterization(
-                algo_test_params
+                algo_test_params, algo_test_data
             )
 
             # TODO: test cleanup
