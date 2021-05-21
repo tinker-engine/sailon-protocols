@@ -5,6 +5,9 @@ from sailon import DummyInterface, RandomNoveltyDetector
 import tinker
 
 
+logger = logging.getLogger(__name__)
+
+
 class ONDProtocol(tinker.protocol.Protocol):
     def __init__(self):
         super().__init__()
@@ -85,7 +88,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             round_id = 0
             end_of_dataset = False
             while not end_of_dataset:
-                logging.info(f"Beginning round {round_id}")
+                logger.info(f"Beginning round {round_id}")
 
                 algo_test_data["round_id"] = round_id
 
