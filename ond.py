@@ -76,7 +76,9 @@ class ONDProtocol(tinker.protocol.Protocol):
 
             algo_test_data = {}
             if "red_light" in test_metadata:
-                algo_test_data["red_light_image"] = test_metadata["red_light"]
+                algo_test_data["red_light_image"] = test_metadata.get(
+                    "red_light", ""
+                )
 
             algorithm.initialize(algo_config_params)
 
@@ -106,7 +108,7 @@ class ONDProtocol(tinker.protocol.Protocol):
                 else:
                     (
                         algo_test_data["features_dict"],
-                        algo_test_data["logit_dict"]
+                        algo_test_data["logits_dict"]
                     ) = algorithm.feature_extraction(algo_test_params)
 
                     # TODO: save features
@@ -139,7 +141,7 @@ class ONDProtocol(tinker.protocol.Protocol):
             # TODO: save attributes
 
             results["characterization"] = algorithm.novelty_characterization(
-                algo_test_params
+                algo_test_params, algo_test_data
             )
 
             # TODO: test cleanup
