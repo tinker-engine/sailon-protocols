@@ -1,5 +1,3 @@
-"""Mocks mainly used for testing protocols (from legacy sail-on-client)."""
-
 import logging
 import random
 from typing import Any, Callable, Dict, List, Tuple
@@ -10,10 +8,55 @@ import torch
 
 from smqtk_core import Configurable, Pluggable
 
+from .errors import RoundError
+from .novelty_interface import ONDAdapter
+
+
 logger = logging.getLogger(__name__)
 
 
-class RandomNoveltyDetector(Configurable, Pluggable):
+class RandomNoveltyDetectorAdapter(ONDAdapter):
+    def __init__(self):
+        self.detector = RandomNoveltyDetector()
+
+    def get_config(self):
+        """
+        Implementation of smqtk Algorithm abstract method.
+        """
+        return {}
+
+    def initialize(self, config_params: dict) -> None:
+        self.detector.initialize(config_params)
+
+    def feature_extraction(self, test_params: dict) -> Tuple[dict, dict]:
+        fpaths = test_params["dataset_ids"]
+        features_dict, logits_dict = self.detector.feature_extraction(fpaths)
+        return features_dict, logits_dict
+
+    def world_detection(self, test_params: dict, test_data: dict) -> str:
+        result = self.detector.world_detection(
+            test_data["features_dict"], test_data["logits_dict"],
+            red_light_image=test_params["red_light_image"],
+            round_id=test_data["round_id"]
+        )
+        return result
+
+    def novelty_adaption(self, test_params: dict, test_data: dict):
+        return self.detector.novelty_adaption(test_data["features_dict"])
+
+    def novelty_classification(self, test_params: dict, test_data: dict):
+        result = self.detector.novelty_classification(
+            test_data["features_dict"], test_data["logits_dict"],
+            round_id=test_data["round_id"]
+        )
+        return result
+
+    def novelty_characterization(self, test_params: dict, test_data: dict):
+        result = self.detector.novelty_characterization(test_data["round_id"])
+        return result
+
+
+class RandomNoveltyDetector():
     def __init__(self):
         """
         Detector constructor.
@@ -23,20 +66,16 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         self.red_light_ind = False
 
-    def get_config(self):
-        """
-        Implementation of smqtk Algorithm abstract method.
-        """
-        return {}
 
-    def initialize(self, config_params: dict):
-        self.config_params = config_params
+    def initialize(self, config: dict):
+        self.config = config
 
-    def feature_extraction(
-        self, test_params: dict, test_data: dict
-    ) -> Tuple[dict, dict]:
+    def feature_extraction(self, fpaths: List[str]) -> Tuple[dict, dict]:
         """
         Feature extraction step for the algorithm.
+
+        Args:
+            fpaths (List[str]): A list of input image filepaths.
 
         Returns:
             tuple: (features_dict, logits_dict)
@@ -49,26 +88,32 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         num_classes = 413
         num_features = random.randint(10, 100)
-
-        with open(test_params["dataset"]) as dataset:
-            for fpath in dataset:
-                logging.info(f"Extracting features for {fpath}")
-                features_dict[fpath] = np.random.randn(num_features)
-                logits_dict[fpath] = np.random.randn(num_classes)
-
+        for fpath in fpaths:
+            logger.info(f"Extracting features for {fpath}")
+            features_dict[fpath] = np.random.randn(num_features)
+            logits_dict[fpath] = np.random.randn(num_classes)
         return features_dict, logits_dict
 
-    def world_detection(self, test_params: dict, test_data: dict) -> str:
+    def world_detection(
+        self, features_dict: dict, logits_dict: dict,
+        red_light_image: str = "", round_id: int = None
+    ) -> str:
         """
         World detection on image features.
+
+        Args:
+            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective features.
+            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective logits.
+            red_light_image (str): TODO
 
         Returns:
             path to csv file containing the results for change in world
         """
-
-        round_id = test_data["round_id"]
-        red_light_image = test_data["red_light_image"]
-        features_dict = test_data["features_dict"]
+        # TODO: Does `logits_dict` need to be an argument to this method?
 
         dst_fpath = f"world_detection_{round_id}.csv"
 
@@ -85,17 +130,21 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         return dst_fpath
 
     def novelty_classification(
-        self, test_params: dict, test_data: dict
+        self, features_dict: dict, logits_dict: dict, round_id: int = None
     ) -> str:
         """
         Novelty classification on image features.
 
+        Args:
+            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective features.
+            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+                where each key corresponds to an image and each value to its
+                respective logits.
         Returns:
             path to csv file containing the novelty classification results
         """
-        round_id = test_data["round_id"]
-        logits_dict = test_data["logits_dict"]
-
         dst_fpath = f"novelty_classification_{round_id}.csv"
 
         if self.red_light_ind:
@@ -117,7 +166,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
 
         return dst_fpath
 
-    def novelty_adaption(self, test_params: dict, test_data: dict):
+    def novelty_adaption(self, features_dict: dict):
         """
         Update models based on novelty classification and characterization.
 
@@ -126,9 +175,7 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         """
         pass
 
-    def novelty_characterization(
-        self, test_params: dict, test_data: dict
-    ) -> str:
+    def novelty_characterization(self, round_id: int = None) -> str:
         """
         Characterize novelty by clustering different novel samples.
 
@@ -137,6 +184,5 @@ class RandomNoveltyDetector(Configurable, Pluggable):
         Returns:
             path to csv file containing the results for novelty characterization step
         """
-        round_id = test_data["round_id"]
         dst_fpath = f"novelty_characterization_{round_id}.csv"
         return dst_fpath
