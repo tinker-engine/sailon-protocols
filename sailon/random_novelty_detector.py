@@ -9,7 +9,7 @@ import torch
 from smqtk_core import Configurable, Pluggable
 
 from .errors import RoundError
-from .novelty_interface import ONDAdapter
+from .ond_adapter import ONDAdapter
 
 
 logger = logging.getLogger(__name__)
