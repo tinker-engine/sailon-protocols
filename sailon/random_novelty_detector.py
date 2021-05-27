@@ -1,57 +1,14 @@
 import logging
 import random
-from typing import Any, Callable, Dict, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
 
 from .errors import RoundError
-from .ond_adapter import ONDAdapter
 
 
 logger = logging.getLogger(__name__)
-
-
-class RandomNoveltyDetectorAdapter(ONDAdapter):
-    def __init__(self):
-        self.detector = RandomNoveltyDetector()
-
-    def get_config(self):
-        """
-        Implementation of smqtk Algorithm abstract method.
-        """
-        return {}
-
-    def initialize(self, config_params: dict) -> None:
-        self.detector.initialize(config_params)
-
-    def feature_extraction(self, test_params: dict) -> Tuple[dict, dict]:
-        fpaths = test_params["dataset_ids"]
-        features_dict, logits_dict = self.detector.feature_extraction(fpaths)
-        return features_dict, logits_dict
-
-    def world_detection(self, test_params: dict, test_data: dict) -> str:
-        result = self.detector.world_detection(
-            test_data["features_dict"], test_data["logits_dict"],
-            red_light_image=test_params["red_light_image"],
-            round_id=test_data["round_id"]
-        )
-        return result
-
-    def novelty_adaption(self, test_params: dict, test_data: dict):
-        return self.detector.novelty_adaption(test_data["features_dict"])
-
-    def novelty_classification(self, test_params: dict, test_data: dict):
-        result = self.detector.novelty_classification(
-            test_data["features_dict"], test_data["logits_dict"],
-            round_id=test_data["round_id"]
-        )
-        return result
-
-    def novelty_characterization(self, test_params: dict, test_data: dict):
-        result = self.detector.novelty_characterization(test_data["round_id"])
-        return result
 
 
 class RandomNoveltyDetector():
@@ -73,7 +30,7 @@ class RandomNoveltyDetector():
         Feature extraction step for the algorithm.
 
         Args:
-            fpaths (List[str]): A list of input image filepaths.
+            fpaths: A list of input image filepaths.
 
         Returns:
             tuple: (features_dict, logits_dict)
@@ -100,10 +57,10 @@ class RandomNoveltyDetector():
         World detection on image features.
 
         Args:
-            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+            features_dict: Dict returned by :meth:`_feature_extraction`
                 where each key corresponds to an image and each value to its
                 respective features.
-            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+            logits_dict: Dict returned by :meth:`_feature_extraction`
                 where each key corresponds to an image and each value to its
                 respective logits.
             red_light_image (str): TODO
@@ -134,10 +91,10 @@ class RandomNoveltyDetector():
         Novelty classification on image features.
 
         Args:
-            features_dict (dict): Dict returned by :meth:`_feature_extraction`
+            features_dict: Dict returned by :meth:`_feature_extraction`
                 where each key corresponds to an image and each value to its
                 respective features.
-            logits_dict (dict): Dict returned by :meth:`_feature_extraction`
+            logits_dict: Dict returned by :meth:`_feature_extraction`
                 where each key corresponds to an image and each value to its
                 respective logits.
         Returns:
