@@ -6,8 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from smqtk_core import Configurable, Pluggable
-
 from .errors import RoundError
 from .ond_adapter import ONDAdapter
 
