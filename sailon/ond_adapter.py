@@ -11,6 +11,10 @@ class ONDAdapter(Configurable, Pluggable, abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def initialize(self, config_params: dict) -> None:
+        pass
+
+    @abc.abstractmethod
     def feature_extraction(self, test_params: dict) -> Tuple[dict, dict]:
         raise NotImplementedError
 
