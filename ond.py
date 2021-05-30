@@ -3,7 +3,7 @@ import logging
 import pathlib
 import pickle
 
-from sailon import DummyInterface, RandomNoveltyDetector
+from sailon import DummyInterface, RandomNoveltyDetectorAdapter 
 import tinker
 
 
@@ -58,7 +58,7 @@ class ONDProtocol(tinker.protocol.Protocol):
         algo_config_params = config["detector_config"]
 
         # smqtk will ultimately handle retrieval of the algorithm.
-        algorithm = RandomNoveltyDetector()
+        algorithm = RandomNoveltyDetectorAdapter()
 
         session_id = self.interface.new_session(
             test_ids=config["test_ids"], protocol="OND",
