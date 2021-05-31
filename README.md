@@ -61,7 +61,6 @@ tinker -c configs/gae_nd_rd_config.yaml ond.py
 **Sample output:**
 
 ```
-tinker -c configs/gae_nd_rd_config.yaml  ond.py
 Using backend: pytorch
 Beginning round 0
 /home/najam/.virtualenv/tinker-engine-dKqDR-tU/lib/python3.7/site-packages/dgl/base.py:45: DGLWarning: Recommend creating graphs by `dgl.graph(data)` instead of `dgl.DGLGraph(data)`.
