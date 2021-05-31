@@ -46,10 +46,10 @@ pip install -e .
 ```
 
 In
-[./sailon/dummy_interface.py](dummy_interface.py), modify the `"red_light"`
+[dummy_interface.py](./sailon/dummy_interface.py), modify the `"red_light"`
 metadata value in `DummyInterface.get_test_metadata` and modify the dataset
 file list in `DummyInterface.dataset_request` to point to the desired test
-video files. Modify the [./configs/gae_nd_rd_config.yaml](GAE sample config)
+video files. Modify the [GAE sample config](./configs/gae_nd_rd_config.yaml)
 to point to the correct detector backbone weights, graph weights, and EVM
 weights. Then, from the repo root directory, run the following:
 
