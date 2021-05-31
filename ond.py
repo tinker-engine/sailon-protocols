@@ -4,6 +4,7 @@ import pathlib
 import pickle
 
 from sailon import DummyInterface
+from sailon.errors import RoundError
 from graph_autoencoder.gae_nd_rd_adapter import GaeNdRdAdapter
 
 import tinker
