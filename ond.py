@@ -3,7 +3,9 @@ import logging
 import pathlib
 import pickle
 
-from sailon import DummyInterface, RandomNoveltyDetectorAdapter 
+from sailon import DummyInterface
+from graph_autoencoder.gae_nd_rd_adapter import GaeNdRdAdapter
+
 import tinker
 
 
@@ -58,12 +60,12 @@ class ONDProtocol(tinker.protocol.Protocol):
         algo_config_params = config["detector_config"]
 
         # smqtk will ultimately handle retrieval of the algorithm.
-        algorithm = RandomNoveltyDetectorAdapter()
+        algorithm = GaeNdRdAdapter()
 
         session_id = self.interface.new_session(
             test_ids=config["test_ids"], protocol="OND",
             domain=config["domain"],
-            novelty_detector_spec="1.0.0.Random",
+            novelty_detector_spec="1.0.0.GAE",
             hints=config["hints"]
         )
 
@@ -133,10 +135,13 @@ class ONDProtocol(tinker.protocol.Protocol):
                         algo_features_dict[id_] = test_features_dict[id_]
                         algo_logits_dict[id_] = test_logits_dict[id_]
                 else:
+                    ### TODO
+                    algo_test_params["dataset"] = dataset
+                    ###
                     (
                         algo_test_data["features_dict"],
                         algo_test_data["logits_dict"]
-                    ) = algorithm.feature_extraction(algo_test_params)
+                    ) = algorithm.feature_extraction(algo_test_params, algo_test_data)
 
                     if config["save_features"]:
                         test_features["features_dict"].update(
