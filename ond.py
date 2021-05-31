@@ -66,9 +66,11 @@ class ONDProtocol(tinker.protocol.Protocol):
         session_id = self.interface.new_session(
             test_ids=config["test_ids"], protocol="OND",
             domain=config["domain"],
-            novelty_detector_spec="1.0.0.GAE",
+            novelty_detector_spec="1.0.0.none",
             hints=config["hints"]
         )
+
+        algo_config_params["session_id"] = session_id
 
         for test_id in config["test_ids"]:
             algo_test_params = {
@@ -88,6 +90,7 @@ class ONDProtocol(tinker.protocol.Protocol):
                     "red_light", ""
                 )
 
+            algo_config_params["test_id"] = test_id
             algorithm.initialize(algo_config_params)
 
             if config["use_saved_features"]:
