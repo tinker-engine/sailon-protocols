@@ -27,13 +27,17 @@ class ONDAdapter(Configurable, Pluggable, abc.ABC):
         """
 
     @abc.abstractmethod
-    def feature_extraction(self, test_params: dict) -> Tuple[dict, dict]:
+    def feature_extraction(
+        self, test_params: dict, test_data: dict
+    ) -> Tuple[dict, dict]:
         """
         Algorithm feature extraction step.
 
         Args:
             test_params: Dict containing test parameters (e.g., input
                 filepaths) for the algorithm feature extraction step.
+            test_data: Dict containing algorithm input/output data (eg,
+                features dict, logits dict).
 
         Returns: ``features_dict`` and ``logits_dict`` output by the algorithm.
         """

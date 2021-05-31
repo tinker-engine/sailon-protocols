@@ -1,0 +1,38 @@
+domain: image_classification
+test_ids: [OND.sample.1]
+novelty_detector_class: gae_nd_rd
+red_light: true
+dataset_root: ""
+detector_config:
+  feature_extractor_params:
+    backbone_weight_path: /path/to/backbone_weights.pt
+    name: i3d
+    arch: i3d-50
+    graph_weight_path: /path/to/graph_weights.pth.tar
+    model_name: i3d
+    n_classes: 400
+    no_cuda: false
+    hidden_dims: [512, 128]
+    hidden: true
+    in_dim: 1024
+    num_heads: [4, 1]
+    sample_duration: 64
+    mode: feature
+    graph_classes: 88
+    feature_type: graph
+  evm_params:
+    weight_path: /path/to/evm_weights.pkl
+    number_of_unknown_to_crate_evm: 7
+  characterization_params:
+    clustering_type: FINCH
+    number_of_unknown_to_strat_clustering: 50
+  dataloader_params:
+    sample_size: 224
+    mean: [114.7748, 107.7354, 99.4750]
+    sample_duration: 64
+    batch_size: 1
+    n_threads: 6
+    n_classes: 88
+  csv_folder: test_algo
+  cores: 6
+  detection_threshold: 0.1
