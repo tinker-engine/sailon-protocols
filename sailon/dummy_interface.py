@@ -102,7 +102,7 @@ class DummyInterface():
             "known_classes": 413,
             "max_novel_classes": 413,
             "protocol": "OND",
-            "red_light": "example_images/image3.jpg",
+            "red_light": "/path/to/video2.avi",
             "round_size": 16,
         }
         return metadata
@@ -146,7 +146,11 @@ class DummyInterface():
             file_list_fname = f"round_{round_id}_file_list.csv"
             file_list_fpath = os.path.join(temp_dir, file_list_fname)
 
-            file_list = ["/home/najam/sailon/videos/v_PizzaTossing_g03_c04.avi"]
+            file_list = [
+                "/path/to/video1.avi",
+                "/path/to/video2.avi",
+                "/path/to/video3.avi",
+            ]
 
             with open(file_list_fpath, "w") as f:
                 for image_fpath in file_list:
