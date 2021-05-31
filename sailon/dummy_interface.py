@@ -27,8 +27,8 @@ class Session():
         self.temp_dir = tempfile.TemporaryDirectory()
         self.image_fpaths = []
 
-        image_w, image_h = (128, 128)
-        num_images = 5
+        image_w, image_h = (512, 512)
+        num_images = 12
         for i in range(num_images):
             img = np.random.randint(
                 0, 255, (image_h, image_w, 3), dtype=np.uint8
@@ -103,7 +103,7 @@ class DummyInterface():
             "max_novel_classes": 413,
             "protocol": "OND",
             "red_light": "example_images/image3.jpg",
-            "round_size": 2,
+            "round_size": 16,
         }
         return metadata
 
@@ -145,6 +145,8 @@ class DummyInterface():
             temp_dir = self.session.temp_dir.name
             file_list_fname = f"round_{round_id}_file_list.csv"
             file_list_fpath = os.path.join(temp_dir, file_list_fname)
+
+            file_list = ["/home/najam/sailon/videos/v_PizzaTossing_g03_c04.avi"]
 
             with open(file_list_fpath, "w") as f:
                 for image_fpath in file_list:
